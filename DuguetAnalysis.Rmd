@@ -171,6 +171,7 @@ corrplot.mixed(M, lower = "square", upper = "number", col=col1(600))
 pdf("Figures/QCTechnicalReplicates.pdf", useDingbats=FALSE, 11.69, 8.27) # width and height in inches.
 corrplot.mixed(M, lower = "square", upper = "number", col=col1(600)) 
 dev.off()
+dev.off()
 ```
 
 ```{r ReplacementNoise, echo=FALSE}
@@ -263,6 +264,14 @@ for (el in Exp) {
   sub <- Means[,grepl(el, dimnames(Means)[[2]])]
   pairs(sub, pch = ".", main = el, upper.panel = panel.cor)
 }
+
+pdf("Figures/QCMeanPerCondition.pdf", useDingbats=FALSE, 8.27, 8.27) # width and height in inches.
+Exp <- c("Tconv", "Treg")
+for (el in Exp) {
+  sub <- Means[,grepl(el, dimnames(Means)[[2]])]
+  pairs(sub, pch = ".", main = el, upper.panel = panel.cor)
+}
+dev.off()
 ```
 
 Correlation between biological replicates and conditions:
@@ -468,6 +477,13 @@ for (k in round(seq(from = 1, to = (nrow(mat1)-(nrow(mat1)/j)+1), by = nrow(mat1
 ```
 
 I save the individual boxplots in `Figures/MultipleBoxplotsUp.pdf` and `Figures/MultipleBoxplotsDown.pdf`.
+
+I create a table for the paper:
+
+```{r, echo = F}
+tablePaper <- df[,c(9,10,2,3,4)]
+write.table(tablePaper, file = "OutputTables/Table1Paper.txt", sep = "\t", row.names = F)
+```
 
 ## Heatmap of raw log2(LFQ) values:
 
