@@ -16,7 +16,7 @@ require(knitr)
 colfunc <- colorRampPalette(c("darkblue", "blue", "deepskyblue", "white", "yellow", "orange", "red", "darkred"))
 ```
 
-```{r, multiplot}
+```{r multiplot, echo = F}
 # Multiple plot function
 #
 # ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
@@ -63,6 +63,27 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 ```
+
+```{r pairwise plots, echo=F}
+panel.cor <- function(x, y, digits = 2, cex.cor, ...)
+{ # modified from https://gist.github.com/arsalvacion/1ba2373bbe89b2d3c023#file-pairscor-r
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  # correlation coefficient
+  r <- cor(x, y, use = "pairwise.complete.obs")
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste("r= ", txt, sep = "")
+  text(0.5, 0.6, txt)
+
+  # p-value calculation
+  p <- cor.test(x, y)$p.value
+  txt2 <- format(c(p, 0.123456789), digits = digits)[1]
+  txt2 <- paste("p= ", txt2, sep = "")
+  if(p<0.01) txt2 <- paste("p= ", "<0.01", sep = "")
+  text(0.5, 0.4, txt2)
+}
+``` 
+
 # The data
 
 This document presents the analysis of Fanny Duguet's data set. It is constituted of 7 biological replicates, with mouse Foxp3+ Tregs (that include both CD25+ and CD25- Tregs) or of Foxp3- naïve T cells, refered to as regulatory T-cells (Treg) and conventional T-cells (Tconv), respectively. All the files have been analysed in Maxquant using matching between runs (groupped per experiment) and normalised across all samples for label free quantification. The peptides with a peptide score under 20 have been removed from the analysis. I work with the output table called `proteinGroups-Score15.txt` located in the folder `/Raw/Duguet`.
@@ -82,15 +103,23 @@ Here are the different steps of the analysis:
  
 The biological replicates are independent experiments. These are labelled:
 
-* M5 (2 injection replicates)
-* M6 (3 injection replicates)
-* M11_R1 (3 injection replicates)
-* M11_R2 (3 injection replicates)
-* M12_1 (1 injection replicate)
-* M12_2 (1 injection replicate)
-* M12_3 (1 injection replicate)
+* M5 (2 injection replicates) - Replicate 1
+* M6 (3 injection replicates) - Replicate 2
+* M11_R1 (3 injection replicates) - Replicate 3
+* M11_R2 (3 injection replicates) - Replicate 4
+* M12_1 (1 injection replicate) - Replicate 5
+* M12_2 (1 injection replicate) - Replicate 6
+* M12_3 (1 injection replicate) - Replicate 7
+
+A file `FilesList.txt` in the folder `MappingTables/` allows the mapping of all raw files, gradient times and replicate names for the analysis.
 
 ```{r input, include = F}
+mapping <- read.delim2(file = "MappingTables/FilesList.txt", header = T, sep = "\t")
+```
+
+`r kable(mapping)`
+
+```{r input2, include = F}
 tab <- read.delim("./Raw/Duguet/proteinGroups-Score15.txt", stringsAsFactors = F, sep = "\t")
 input <- length(unique(tab$Majority.protein.IDs))
 tab <- tab[!grepl("CON_", tab$Majority.protein.IDs) & !grepl("REV_", tab$Majority.protein.IDs),]
@@ -106,6 +135,14 @@ row.names(ms) <- tab$Majority.protein.IDs
 log <- sapply(1:nrow(mat), function(x) sum(is.na(mat[x,])) != length(mat[x,]))
 mat <- mat[log,]
 ms <- ms[log,]
+
+dimnames(mat)[[2]] <- gsub("M5", "1", dimnames(mat)[[2]])
+dimnames(mat)[[2]] <- gsub("M6", "2", dimnames(mat)[[2]])
+dimnames(mat)[[2]] <- gsub("M11_R1", "3", dimnames(mat)[[2]])
+dimnames(mat)[[2]] <- gsub("M11_R2", "4", dimnames(mat)[[2]])
+dimnames(mat)[[2]] <- gsub("M12_1", "5", dimnames(mat)[[2]])
+dimnames(mat)[[2]] <- gsub("M12_2", "6", dimnames(mat)[[2]])
+dimnames(mat)[[2]] <- gsub("M12_3", "7", dimnames(mat)[[2]])
 ```
 
 From the MaxQuant export table, there are `r input` unique "Majority.protein.IDs". After removing the contaminants, `r input2` remain, after removing the rows with only NAs, there are `r nrow(mat)` unique "Majority.protein.IDs" remaining.
@@ -113,11 +150,27 @@ From the MaxQuant export table, there are `r input` unique "Majority.protein.IDs
 Pairwise plots of the raw values per biological experiment with technical replicates:
 
 ```{r paiwise, echo=FALSE}
-Exp <- c("M5", "M6", "M11_R1", "M11_R2")
+#Exp <- c("M5", "M6", "M11_R1", "M11_R2")
+Exp <- c(".1", ".2", ".3", ".4", ".5", ".6", ".7")
+pdf("Figures/QCTechnicalByReplicates.pdf", useDingbats=FALSE, 11.69, 8.27) # width and height in inches.
 for (el in Exp) {
   sub <- mat[,grepl(el, dimnames(mat)[[2]])]
-  pairs(sub, pch = ".", main = el)
+  pairs(sub, pch = ".", main = paste0("Biological replicate ", el), upper.panel = panel.cor)
 }
+dev.off()
+
+for (el in Exp) {
+  sub <- mat[,grepl(el, dimnames(mat)[[2]])]
+  pairs(sub, pch = ".", main = paste0("Biological replicate ", el), upper.panel = panel.cor)
+}
+
+M <- cor(mat, use = "complete.obs")
+col1 <- colorRampPalette(c("darkred", "red", "indianred1", "white", "white", "white", "cornflowerblue", "blue", "darkblue")) 
+corrplot.mixed(M, lower = "square", upper = "number", col=col1(600)) 
+
+pdf("Figures/QCTechnicalReplicates.pdf", useDingbats=FALSE, 11.69, 8.27) # width and height in inches.
+corrplot.mixed(M, lower = "square", upper = "number", col=col1(600)) 
+dev.off()
 ```
 
 ```{r ReplacementNoise, echo=FALSE}
@@ -138,7 +191,8 @@ kable(data.frame("file" = dimnames(mat)[[2]], "Replacement value" = noise))
 #}
 mat <- mat[,order(names(mat))]
 
-Exp2 <- c("M5", "M6", "M11_R1", "M11_R2", "M12_1", "M12_2", "M12_3")
+#Exp2 <- c("M5", "M6", "M11_R1", "M11_R2", "M12_1", "M12_2", "M12_3")
+Exp2 <- Exp
 
 vec <- rep(FALSE, nrow(mat))
 for (i in 1:nrow(mat)) {
@@ -178,6 +232,14 @@ The table with the mean values per condition and experiment is saved as `Duguet_
 ```{r Means, echo=FALSE}
 Means <- matrix(nrow = nrow(mat), ncol = 14)
 conditions <- c("Tconv.M11_R1", "Tconv.M11_R2", "Tconv.M12_1", "Tconv.M12_2", "Tconv.M12_3", "Tconv.M5", "Tconv.M6", "Treg.M11_R1", "Treg.M11_R2", "Treg.M12_1", "Treg.M12_2", "Treg.M12_3", "Treg.M5", "Treg.M6")
+conditions <- gsub("M5", "1", conditions)
+conditions <- gsub("M6", "2", conditions)
+conditions <- gsub("M11_R1", "3", conditions)
+conditions <- gsub("M11_R2", "4", conditions)
+conditions <- gsub("M12_1", "5", conditions)
+conditions <- gsub("M12_2", "6", conditions)
+conditions <- gsub("M12_3", "7", conditions)
+
 dimnames(Means)[[2]] <- conditions
 dimnames(Means)[[1]] <- row.names(mat)
 for (i in 1:ncol(Means)) {
@@ -199,15 +261,21 @@ boxplot(Means, las = 2, main = "Mean LFQ values per experiment and condition")
 Exp <- c("Tconv", "Treg")
 for (el in Exp) {
   sub <- Means[,grepl(el, dimnames(Means)[[2]])]
-  pairs(sub, pch = ".", main = el)
+  pairs(sub, pch = ".", main = el, upper.panel = panel.cor)
 }
 ```
 
 Correlation between biological replicates and conditions:
 
 ```{r, echo = F}
+#col1 <- colorRampPalette(c("red", "white", "blue")) 
 M <- cor(Means, use = "complete.obs")
-corrplot(M, method = "square")
+corrplot.mixed(M, lower = "circle", upper = "number") # , col=col1(100)
+pairs(Means, pch = ".", upper.panel = panel.cor)
+
+pdf("Figures/QCMeanReplicates.pdf", useDingbats=FALSE, 8.27, 8.27) # width and height in inches.
+pairs(Means, pch = ".", upper.panel = panel.cor)
+dev.off()
 ```
 
 # Statistical analysis
@@ -349,7 +417,7 @@ dev.off()
 
 I generate boxplots with the 80 proteins in the barplots (highest fold changes).
 
-```{r, echo = F}
+```{r, echo = F, message=F}
 mat1 <- export[,c(24,5:18)]
 mat1 <- mat1[mat1$Gene.names %in% p1$Gene.names,]
 
