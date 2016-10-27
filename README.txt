@@ -23,3 +23,5 @@ ORGANISATION OF THE REPOSITORY:
 The files are the following:
 - "DuguetAnalysis.Rmd" and the corresponding html contain the scrips of the analysis of our data set.
 - "DuguetAnalysisOtherDS.Rmd" and the corresponding html contain the scripts of the analysis of Duguet's data set together with a proteomic and a transcriptomic data set (both already published, see html for references).
+
+I performed again the analysis with only the proteins identified by a minimum of 2 unique peptides. The corresponding files are named "..2PepOrMore" and resulting tables and figures are in the folders "..2PepOrMore".
