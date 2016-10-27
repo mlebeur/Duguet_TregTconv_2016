@@ -168,7 +168,7 @@ for (el in Exp) {
 }
 
 M <- cor(mat, use = "complete.obs")
-col1 <- colorRampPalette(c("darkred", "red", "indianred1", "white", "white", "white", "cornflowerblue", "blue", "darkblue")) 
+col1 <- colorRampPalette(c("darkred", "red", "indianred1", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "white", "cornflowerblue", "blue", "darkblue", "black")) 
 corrplot.mixed(M, lower = "square", upper = "number", col=col1(600)) 
 
 pdf("Figures/2PepOrMore/QCTechnicalReplicates.pdf", useDingbats=FALSE, 11.69, 8.27) # width and height in inches.
