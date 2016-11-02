@@ -7,13 +7,18 @@ output: html_document
 
 I download the data from `GSE7460`: matrix.
 
-```{r input}
-source("https://bioconductor.org/biocLite.R")
-biocLite("GEOquery")
-biocLite(c("Biobase"))
+```{r input, eval = F}
+#source("https://bioconductor.org/biocLite.R")
+#biocLite("GEOquery")
+#biocLite(c("Biobase"))
 library(GEOquery)
 library(Biobase)
 mygeomat <- getGEO("GSE7460", GSEMatrix=T)
+save(list = ls(), file = "data.Rdata")
+```
+
+```{r}
+load("data.Rdata")
 show(mygeomat)
 show(pData(phenoData(mygeomat[[1]]))[,c(1,6,8)])
 names(pData(phenoData(mygeomat[[1]])))
@@ -27,11 +32,16 @@ mat <- exprs(mygeomat[[1]])
 The Affimetrix array uses the `moe430-20` Affymetrix Mouse Genome 430 2.0 Array (Annotation: GPL1261).
 
 ```{r conversion}
-biocLite("mouse4302.db")
+#biocLite("mouse4302.db")
 library(mouse4302.db)
 affyid <- rownames(mat)
 egids2 <- mouse4302ENTREZID[affyid]
 annots <- toTable(egids2)
+```
+
+I mapp `r length(unique(annots$probe_id))` on the `r length(unique(affyid))` IDs in input.
+
+```{r}
 str(annots)
 mat1 <- mat[annots$probe_id,]
 #if multiple probe sets map to a gene, select the one with maximal IQR 
@@ -57,7 +67,7 @@ if(length(xx) > 0) {
 }
 maptab <- cbind(names(xx), unlist(xx))
 mat2 <- cbind(mat2, "GeneSymbol" = maptab[,2][match(rownames(mat2), maptab[,1])])
-write.csv(mat2, "ExpressionData/ExpressionDataReanalysed.csv")
+write.csv(mat2, "ExpressionDataReanalysed.csv")
 ```
 
 ```{r}
@@ -72,6 +82,6 @@ nmat[,2] <- as.numeric(mat3[,3])/as.numeric(mat3[,5])
 nmat[,3] <- as.numeric(mat3[,4])/as.numeric(mat3[,6])
 colnames(nmat) <- c("Expression Rep1", "Expression Rep2", "Expression Rep3")
 rownames(nmat) <- rownames(mat3)
-save(nmat, mat3, file = "ExpressionData/ExpData.Rdata")
+save(nmat, mat3, file = "ExpData.Rdata")
 ```
 
