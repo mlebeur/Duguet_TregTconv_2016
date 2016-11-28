@@ -40,10 +40,34 @@ The final table is saved as `OutputTables/2PepOrMore/SignatureFoxp3.txt`.
 tab <- read.delim("OutputTables/2PepOrMore/TotalAnalysisTconvTreg.txt", stringsAsFactors = F)
 load("Raw/ExpressionData/ExpData.Rdata")
 
+expSup <- read.delim("Raw/ExpressionData/SupTableExpression.txt", sep = "\t", header = T)
+expSup <- expSup[,c(1,2,3)]
+
+mat2 <- cbind(mat2, "geneNamesExp"=as.character(expSup$Gene.Symbol)[match(as.character(mat2[,54]), as.character(expSup$Probe.Set.ID))])
+
 means <- log2(rowMeans(nmat))
 tabexp <- nmat
 
 tab1 <- cbind(tab, "MeanExpression"= means[match(tab$Gene.names, names(means))])
+#tab1$MeanExpression[is.na(tab1$MeanExpression)] <- means[match(tab1$Gene.names[is.na(tab1$MeanExpression)], as.character(mat2[,(ncol(mat2)-2)]))]
+```
+
+There are some issues with name genes for the mapping. 
+
+name in our data set | name in the expression data set
+---------------------|--------------------------------
+Folr4 | Izumo1r
+Gbp4 | Gbp3
+Ca2 | Car2
+
+I manually map these.
+
+```{r}
+
+tab1$MeanExpression[tab1$Gene.names=="Folr4"] <- as.numeric(means[names(means)=="Izumo1r"])[!is.na(as.numeric(means[names(means)=="Izumo1r"]))]
+tab1$MeanExpression[tab1$Gene.names=="Gbp4"] <- as.numeric(means[names(means)=="Gbp3"])[!is.na(as.numeric(means[names(means)=="Izumo1r"]))]
+tab1$MeanExpression[tab1$Gene.names=="Ca2"] <- as.numeric(means[names(means)=="Car2"])[!is.na(as.numeric(means[names(means)=="Izumo1r"]))]
+
 tab10 <- tab1
 tab1 <- tab1[!is.na(tab1$MeanExpression),]
 ngenes <- length(unique(tab1$Gene.names)) # number of unique genes in our dataset
@@ -118,6 +142,8 @@ tab10 <- cbind(tab10, "mapping" = tabmap)
 
 maptab <- read.delim("Raw/ProteomicsData/uniprot-yourlist%3AM2015113099G02LBX6Z-GenesMSinput.tab", sep = "\t")
 maptab2 <- maptab[maptab[,2] %in% tab10$mapping,]
+
+exp$Gene.name <- as.character(exp$Gene.name)
 
 val <- exp$Average.log2.Ratio.Treg.Tconv[match(maptab2[,1], toupper(exp$Gene.name))]
 val2 <- val[match(tab10$mapping, maptab2[,2])]
@@ -204,7 +230,11 @@ rownames(mat) <- tab$Gene.names
 colnames(mat) <- c("M11_R1", "M11_R2", "M12_1", "M12_2", "M12_3", "M5", "M6")
 tab4 <- data.frame(mat, "Gene.names"=rownames(mat))
 tabexp1 <- as.data.frame(log2(tabexp))
-tabexp1 <- cbind(tabexp1, "Gene.names" = rownames(tabexp))
+tabexp1 <- cbind(tabexp1, "Gene.names" = rownames(tabexp1))
+tabexp1$Gene.names <- as.character(tabexp1$Gene.names)
+tabexp1$Gene.names[tabexp1$Gene.names %in% c("Izumo1r")] <- "Folr4"
+tabexp1$Gene.names[tabexp1$Gene.names %in% c("Gbp3")] <- "Gbp4"
+tabexp1$Gene.names[tabexp1$Gene.names %in% c("Car2")] <- "Ca2"
 tab2 <- merge(tab4, tabexp1, by="Gene.names", all = T)
 #tabProt <- tabProt[!is.na(tabProt$Stdev.log2.Ratio.Treg.Tconv),]
 tabProt <- tabProt[tabProt$Gene.name!="",]
@@ -250,6 +280,7 @@ mat3 <- df2[sapply(1:length(NAUs), function(x) sum(NAUs[x], NAProt[x], NAExp[x],
 mat3 <- mat3[!is.na(mat3$Gene.names),]
 df3 <- data.frame(mat2, "Gene.names"=df2$Gene.names)
 
+write.table(mat3, "OutputTables/2PepOrMore/HeatMapProtExp_Table.txt", sep = "\t", row.names = F)
 # select the 50% up and down:
 s <- rowMeans(mat3[,1:14], na.rm = T)
 down <- length(s[s<0]) %/% 2 
@@ -277,8 +308,6 @@ g
 pdf("Figures/2PepOrMore/TregTconv3DS.pdf", useDingbats=FALSE, 8.27, 11.69) # width and height in inches.
 g
 dev.off()
-
-#write.table(mat3, "OutputTables/2PepOrMore/HeatMapProtExp_Table.txt", sep = "\t", row.names = F)
 ```
 
 The table used for the final heatmap is: `OutputTables/2PepOrMore/HeatMapProtExp_Table.txt`.
