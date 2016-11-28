@@ -26,7 +26,6 @@ mat <- pData(phenoData(mygeomat[[1]]))[,c(1,6,8)]
 gsms <- rownames(mat[grepl("Treg", mat$title) | grepl("Tconv", mat$title),])
 types <- as.character(mat$title[grepl("Treg", mat$title) | grepl("Tconv", mat$title)])
 mat <- exprs(mygeomat[[1]])
-
 ```
 
 The Affimetrix array uses the `moe430-20` Affymetrix Mouse Genome 430 2.0 Array (Annotation: GPL1261).
@@ -50,6 +49,7 @@ sel.rn=tapply(1:nrow(annots), annots$gene_id, function(x){
  x[which.max(iqrs[x])]
  })
 mat2=mat1[sel.rn,]
+mapping <- data.frame("probes"=rownames(mat2), "GeneIDs"=names(sel.rn))
 rownames(mat2)=names(sel.rn)
 colnames(mat2) <- as.character(pData(phenoData(mygeomat[[1]]))[,c(1,6,8)]$title)
 
@@ -66,14 +66,14 @@ if(length(xx) > 0) {
   xx[[1]]
 }
 maptab <- cbind(names(xx), unlist(xx))
-mat2 <- cbind(mat2, "GeneSymbol" = maptab[,2][match(rownames(mat2), maptab[,1])])
+mat2 <- cbind(mat2, "GeneSymbol" = maptab[,2][match(rownames(mat2), maptab[,1])], "probes" = as.character(mapping$probes))
 write.csv(mat2, "ExpressionDataReanalysed.csv")
 ```
 
 ```{r}
 mat3 <- mat2[,grepl("Treg", colnames(mat2)) | grepl("Tconv", colnames(mat2))]
 mat3 <- mat3[,!grepl("Act", colnames(mat3)) & !grepl("Thy", colnames(mat3))]
-rownames(mat3) <- mat2[,ncol(mat2)]
+rownames(mat3) <- mat2[,(ncol(mat2)-1)]
 head(mat3)
 
 nmat <- matrix(ncol = 3, nrow = nrow(mat3))
@@ -82,6 +82,6 @@ nmat[,2] <- as.numeric(mat3[,3])/as.numeric(mat3[,5])
 nmat[,3] <- as.numeric(mat3[,4])/as.numeric(mat3[,6])
 colnames(nmat) <- c("Expression Rep1", "Expression Rep2", "Expression Rep3")
 rownames(nmat) <- rownames(mat3)
-save(nmat, mat3, file = "ExpData.Rdata")
+save(nmat, mat2, mat3, file = "ExpData.Rdata")
 ```
 
