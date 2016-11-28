@@ -326,19 +326,24 @@ library(mouse4302.db)</code></pre>
 egids2 &lt;- mouse4302ENTREZID[affyid]
 annots &lt;- toTable(egids2)</code></pre>
 <p>I mapp 38208 on the 45101 IDs in input.</p>
+<pre class="r"><code># Some probes are not mapped in the mouse4303.db but were mapped in Hill et al.'s analysis. I keep the probe names in their list of &quot;signature genes&quot;.
+keep &lt;- read.delim(&quot;SupTableExpression.txt&quot;, sep = &quot;\t&quot;, header = T)
+keepID &lt;- as.character(keep$Probe.Set.ID)
+keepID &lt;- setdiff(keepID, annots$probe_id) # list of probes regulated in the paper but not present in our mapping Affimetrix file.</code></pre>
+<p>There are 64 probes that are in the supp. table from Hill et al. but not in the mouse4302 Affimetrix mapping file.</p>
 <pre class="r"><code>str(annots)</code></pre>
 <pre><code>## 'data.frame':    38208 obs. of  2 variables:
 ##  $ probe_id: chr  &quot;1415670_at&quot; &quot;1415671_at&quot; &quot;1415672_at&quot; &quot;1415673_at&quot; ...
 ##  $ gene_id : chr  &quot;54161&quot; &quot;11972&quot; &quot;57437&quot; &quot;100678&quot; ...</code></pre>
-<pre class="r"><code>mat1 &lt;- mat[annots$probe_id,]
+<pre class="r"><code>mat1 &lt;- mat[c(annots$probe_id, keepID),]
 #if multiple probe sets map to a gene, select the one with maximal IQR 
 iqrs=apply(mat1, 1, IQR)
 sel.rn=tapply(1:nrow(annots), annots$gene_id, function(x){
  x[which.max(iqrs[x])]
  })
-mat2=mat1[sel.rn,]
-mapping &lt;- data.frame(&quot;probes&quot;=rownames(mat2), &quot;GeneIDs&quot;=names(sel.rn))
-rownames(mat2)=names(sel.rn)
+mat2=rbind(mat1[sel.rn,], mat1[keepID,])
+mapping &lt;- data.frame(&quot;probes&quot;=rownames(mat2), &quot;GeneIDs&quot;=c(names(sel.rn), rep(NA, length(keepID))))
+rownames(mat2)=c(names(sel.rn), as.character(keep$NCBI[match(keepID, keep$Probe.Set.ID)]))
 colnames(mat2) &lt;- as.character(pData(phenoData(mygeomat[[1]]))[,c(1,6,8)]$title)
 
 library(org.Mm.eg.db)

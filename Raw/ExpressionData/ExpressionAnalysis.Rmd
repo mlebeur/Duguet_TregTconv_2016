@@ -41,16 +41,25 @@ annots <- toTable(egids2)
 I mapp `r length(unique(annots$probe_id))` on the `r length(unique(affyid))` IDs in input.
 
 ```{r}
+# Some probes are not mapped in the mouse4303.db but were mapped in Hill et al.'s analysis. I keep the probe names in their list of "signature genes".
+keep <- read.delim("SupTableExpression.txt", sep = "\t", header = T)
+keepID <- as.character(keep$Probe.Set.ID)
+keepID <- setdiff(keepID, annots$probe_id) # list of probes regulated in the paper but not present in our mapping Affimetrix file.
+```
+
+There are `r length(unique(keepID))` probes that are in the supp. table from Hill et al. but not in the mouse4302 Affimetrix mapping file.
+
+```{r}
 str(annots)
-mat1 <- mat[annots$probe_id,]
+mat1 <- mat[c(annots$probe_id, keepID),]
 #if multiple probe sets map to a gene, select the one with maximal IQR 
 iqrs=apply(mat1, 1, IQR)
 sel.rn=tapply(1:nrow(annots), annots$gene_id, function(x){
  x[which.max(iqrs[x])]
  })
-mat2=mat1[sel.rn,]
-mapping <- data.frame("probes"=rownames(mat2), "GeneIDs"=names(sel.rn))
-rownames(mat2)=names(sel.rn)
+mat2=rbind(mat1[sel.rn,], mat1[keepID,])
+mapping <- data.frame("probes"=rownames(mat2), "GeneIDs"=c(names(sel.rn), rep(NA, length(keepID))))
+rownames(mat2)=c(names(sel.rn), as.character(keep$NCBI[match(keepID, keep$Probe.Set.ID)]))
 colnames(mat2) <- as.character(pData(phenoData(mygeomat[[1]]))[,c(1,6,8)]$title)
 
 library(org.Mm.eg.db)
