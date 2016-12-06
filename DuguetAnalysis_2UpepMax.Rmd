@@ -305,8 +305,8 @@ for (i in 1:ncol(CV)) {
 CV <- CV/Means
 hist(CV)
 medCV <- median(CV, na.rm = T)
-q099 <- quantile(CV, 0.01, na.rm = T)
-q090 <-quantile(CV, 0.1, na.rm = T)
+q099 <- quantile(CV, 0.99, na.rm = T)
+q090 <-quantile(CV, 0.9, na.rm = T)
 
 
 ggplot(melt(CV), aes(x = value)) + geom_histogram() + theme_bw() + ggtitle("histogram of CVs obtained from technical replicates")
@@ -315,7 +315,7 @@ ggplot(melt(CV), aes(x = value)) + geom_histogram() + theme_bw() + ggtitle("hist
 dev.off()
 ```
 
-The median of technical CVs is `r medCV`, 99% of the CVs are above `r q099` and 90% are above `r q090`.
+The median of technical CVs is `r medCV*100`, 99% of the CVs are under `r q099*100` and 90% are under `r q090*100`.
 
 Correlation between biological replicates and conditions:
 
@@ -353,8 +353,8 @@ for (i in 1:ncol(CV)) {
 hist(CV)
 
 medCV <- median(CV, na.rm = T)
-q099 <- quantile(CV, 0.01, na.rm = T)
-q090 <-quantile(CV, 0.1, na.rm = T)
+q099 <- quantile(CV, 0.99, na.rm = T)
+q090 <-quantile(CV, 0.9, na.rm = T)
 
 
 
@@ -364,7 +364,7 @@ ggplot(melt(CV), aes(x = value)) + geom_histogram() + theme_bw() + ggtitle("hist
 dev.off()
 ```
 
-The median of biological CVs is `r medCV`, 99% of the CVs are above `r q099` and 90% are above `r q090`.
+The median of biological CVs is `r medCV*100`, 99% of the CVs are under `r q099*100` and 90% are under `r q090*100`.
 
 # Statistical analysis
 
