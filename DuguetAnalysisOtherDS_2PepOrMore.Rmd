@@ -133,17 +133,24 @@ I use all the protein accessions in the column `Accession` as input in [Uniprot 
 
 ```{r Proteomic, echo=F}
 exp <- read.delim("Raw/ProteomicsData/Sup Table 1.csv", sep = ";", header = T)
+```
 
-ProtMap <- sapply(as.character(exp$Accession), function(x) strsplit(x, ",", fixed = T)[[1]][1])
+Anne noticed that the gene Tdrp is not referenced in the table. I add it in the line with the protein.name "Uncharacterized protein C8orf42 homolog" (corresponds to Tdrp).
+
+```{r, echo = F}
+
+exp$Gene.name <- as.character(exp$Gene.name)
+exp$Gene.name[grepl("C8orf42", exp$"Protein.name")] <- "Tdrp"
 # Issues with retrieval of the old Uniprot accessions so I use the gene names instead:
 ProtMap <- as.character(exp$Gene.name)
+
 tabmap <- sapply(tab10$Majority.protein.IDs, function(x) strsplit(x, ";")[[1]][1])
 tab10 <- cbind(tab10, "mapping" = tabmap)
 
-maptab <- read.delim("Raw/ProteomicsData/uniprot-yourlist%3AM2015113099G02LBX6Z-GenesMSinput.tab", sep = "\t")
+maptab <- read.delim("Raw/ProteomicsData/uniprot-yourlist%3AM2015113099G02LBX6Z-GenesMSinput.tab", sep = "\t", stringsAsFactors = F)
+maptab <- rbind(maptab, c("TDRP", "Q8C5P7"))
 maptab2 <- maptab[maptab[,2] %in% tab10$mapping,]
 
-exp$Gene.name <- as.character(exp$Gene.name)
 
 val <- exp$Average.log2.Ratio.Treg.Tconv[match(maptab2[,1], toupper(exp$Gene.name))]
 val2 <- val[match(tab10$mapping, maptab2[,2])]
