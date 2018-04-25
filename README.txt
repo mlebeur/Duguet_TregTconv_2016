@@ -6,10 +6,11 @@
 
 Data from Fanny Duguet.
 
+Find the publication here: http://www.mcponline.org/content/16/8/1416.long
 
 CONCEPT OF THE STUDY:
 
-We analysed the proteomes of mouse Foxp3+ Tregs (that include both CD25+ and CD25- Tregs) and of Foxp3- naïve T cells, refered to as regulatory T-cells (Treg) and conventional T-cells (Tconv), respectively.
+We analysed the proteomes of mouse Foxp3+ Tregs (that include both CD25+ and CD25- Tregs) and of Foxp3- naÃ¯ve T cells, refered to as regulatory T-cells (Treg) and conventional T-cells (Tconv), respectively.
 
 ORGANISATION OF THE REPOSITORY:
 
